@@ -4,7 +4,7 @@
 
 > **10 prompt engineering skills that turn Claude into a cinematic video director for Seedance 2.0 on Higgsfield.** You describe an idea — the skill architects a 15-25 line production-grade prompt with exact timing, camera angles, lighting setup, and sound design. Paste into Higgsfield, get studio-quality video.
 
-**This is the actual skill set I use to generate every AI video for [@theromanknox](https://instagram.com/theromanknox) (280K+ followers).** Not templates. Not "try this prompt." The real production pipeline — copied straight from my `~/.claude/skills/`.
+**This is the actual skill set I use to generate every AI video for [@theromanknox](https://instagram.com/theromanknox) (300K+ followers).** Not templates. Not "try this prompt." The real production pipeline — copied straight from my `~/.claude/skills/`.
 
 ---
 
@@ -129,7 +129,7 @@ Every skill is a deep engineering framework, not a prompt template. Each one con
 
 **Roman Knox** — I build AI products that make money. Not demos.
 
-- 📸 [Instagram — @theromanknox](https://www.instagram.com/theromanknox) (280K+ followers)
+- 📸 [Instagram — @theromanknox](https://www.instagram.com/theromanknox) (300K+ followers)
 - 🎓 [Knox Community on Skool](https://www.skool.com/knox/about) — n8n library, Claude skills, cold outreach systems, weekly live sessions
 
 ### My other Claude skills
