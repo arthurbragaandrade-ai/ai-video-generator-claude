@@ -1,4 +1,4 @@
-# Contos do Tio Art — Prompts Seedance 2.0 (vídeos 2 a 5)
+# Contos do Tio Art — Prompts Seedance 2.0 (vídeos 1 a 5)
 
 Canal novo, baseado na fórmula vencedora da análise do @nursytots (`skills/11-channel-analysis/examples/nursytots-2026-10.md`): **erro → consequência → ajudante → correção → final feliz**, em Shorts verticais de 15–19s. Elenco, cenários, música e assinatura são próprios, para o canal não ser cópia.
 
@@ -41,6 +41,49 @@ THEO:
 - **Trilha:** ukulele do Tio Art, com uma levada de bossa nova na praia.
 - **Canto:** cada história tem uma frase cantada em português com a lição (sempre entre 0:09 e 0:12).
 - **Final:** todo vídeo termina com o jingle "Mais um conto do Tio Art!".
+
+---
+
+## Vídeo 1 — Pare, Olhe e Dê a Mão! 🚦
+
+**Título:** Pare, Olhe e Dê a Mão! 🚦 Segurança na Rua para Crianças | Contos do Tio Art
+**Hashtags:** #segurancainfantil #transito #shorts
+**Lição:** atravessar só na faixa e de mão dada com um adulto · **Gancho:** Whip Pan (skill 01) · mesmo tema de segurança do hit de 11,7M (patinete)
+
+```
+STYLE LOCK:
+Premium stylized 3D animation for toddlers, soft rounded shapes, gentle subsurface skin shading, warm storybook palette (terracotta, mustard yellow, teal, cream), saturated but soft colors, smooth bouncy toy-like motion, vertical 9:16, 1080x1920.
+
+CHARACTERS:
+LULU: 3-year-old girl, light-brown skin, big dark-brown eyes, round cheeks, dark curly hair in two puff buns with yellow scrunchies, white t-shirt under red overalls with a small yellow star patch on the chest, red sneakers — identical design in every shot.
+TIO ART: Friendly man in his early 30s, warm tan skin, short dark wavy hair, neat short beard, round tortoiseshell glasses, mustard-yellow cardigan over a white t-shirt, dark-blue jeans, brown sneakers, small wooden ukulele on his back — identical design in every shot.
+
+HOOK — Whip Pan (0:00–0:02):
+Low-angle close-up of Lulu giggling as she kicks a red ball along the sidewalk of a quiet street lined with pastel houses and a blooming yellow ipê tree, shallow depth of field. The ball bounces past the lens; the camera whip-pans (rapid, 0.5s) to follow it rolling off the curb into the street and settles with a slight overshoot.
+
+THE MISTAKE (0:02–0:05):
+Wide shot from across the street, ball center frame: Lulu runs after it and steps off the curb with her arms out. In the background a small teal car slows down, gives two soft horn beeps and stops gently at a safe distance. No impact.
+
+THE SCARE (0:05–0:08):
+Fast eased push-in (0.5s) to Lulu's face frozen mid-step: eyes wide, lower lip trembling, tears welling, the background falling to soft blur. Tio Art rushes in from frame left, lifts her back onto the sidewalk and holds her close.
+
+THE LESSON (0:08–0:12):
+Medium two-shot at Lulu's eye level: Tio Art kneels, takes her hand and points to a zebra crosswalk with a pedestrian signal. Lulu copies him, turning her head left, then right; the signal switches from the red standing figure to the green walking figure with a cheerful chime, and the teal car's driver waves them across. Slow push-in.
+
+HAPPY ENDING (0:12–0:15):
+Slow dolly back: Lulu and Tio Art cross on the zebra stripes holding hands, Lulu hugging the red ball under her other arm. On the far sidewalk she gives a big thumbs-up to camera, both centered.
+
+MOTION NOTE:
+Bouncy toy-like character animation; camera at child eye level except the whip pan and the push-in. The car moves slowly and stops well away from Lulu — a surprise, never a near-crash. Keep all action in the central 70% of the frame (top and bottom 15% are covered by the Shorts UI). No text on screen.
+
+LIGHTING:
+Late-morning sun 5600K as key from camera-right; blue-sky fill 7000K; warm 4500K bounce off the pastel walls. Soft shadows, gentle contrast, shallow depth of field on every close-up.
+
+SOUND DIRECTION (music-first):
+Ukulele + xylophone, 110 BPM, cheerful. SFX: rubber ball bounces 0:00–0:02, two soft horn beeps at 0:04 (music ducks for 1s), small gasp and sniffle at 0:06, crosswalk chime at 0:10, Lulu's "Eba!" at 0:13. Sung in Brazilian Portuguese at 0:09, warm male voice (Tio Art) with Lulu echoing the last words: "Para, olha pros lados e dá a mão!"
+
+MATERIAL REFS: @image1 Lulu character sheet, @image2 Tio Art character sheet.
+```
 
 ---
 
