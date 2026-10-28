@@ -24,7 +24,7 @@ One idea in, finished video prompt out.
 
 ---
 
-## The 10 skills
+## The 11 skills
 
 ### For views
 | # | Skill | What it generates |
@@ -47,6 +47,11 @@ One idea in, finished video prompt out.
 | 06 | **Luxury Aesthetic** | Chanel-level video for any brand, zero budget |
 | 07 | **Before-After** | Transformation reveals that get saved and shared |
 | 09 | **AI Avatar** | Digital persona content at scale |
+
+### For research
+| # | Skill | What it generates |
+|---|---|---|
+| 11 | **Channel Analysis** | Reverse-engineers any YouTube channel: what wins by theme, format and title, the visual formula of the hits, and Seedance prompts in that formula. Needs `pip install "yt-dlp[default]"` + Node.js |
 
 ---
 
@@ -106,6 +111,9 @@ python install.py --list   # Preview available skills
 
 "Turn this podcast clip into a cinematic video for Reels"
 → Podcast Visual skill transforms the audio into visual storytelling with kinetic typography
+
+"Analyze youtube.com/@channel — what makes their Shorts go viral?"
+→ Channel Analysis pulls every video's stats and storyboards, finds the formula of the hits, and hands it to the matching skill as a ready prompt
 ```
 
 ---
