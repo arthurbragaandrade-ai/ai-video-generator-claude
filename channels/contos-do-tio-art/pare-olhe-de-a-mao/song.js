@@ -118,6 +118,7 @@ const out = path.join(__dirname, 'out');
 const mix = MIX.mixdown(stems, GAIN, { stemDir: process.env.STEMS ? out : null });
 MIX.highpass(mix, 30);
 MIX.fadeOut(mix, DURATION - 1.2, DURATION);
-const M = MIX.master(mix, parseFloat(process.env.DRIVE || '0.8'), undefined, { lufs: process.env.LUFS ? parseFloat(process.env.LUFS) : -14 });
+// ceiling 0.7 (≈ -3 dBTP): AAC adds ~1.2 dB to the sharp xylophone and pop transients
+const M = MIX.master(mix, parseFloat(process.env.DRIVE || '0.8'), 0.7, { lufs: process.env.LUFS ? parseFloat(process.env.LUFS) : -14 });
 MIX.writeWav(path.join(out, 'music.wav'), mix);
 console.log(`wrote out/music.wav (${DURATION.toFixed(2)}s${M.lufs !== undefined ? `, ${M.lufs.toFixed(1)} LUFS at drive ${M.drive.toFixed(2)}` : ''})`);
