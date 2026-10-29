@@ -5,16 +5,18 @@
   const { T, BEAT, ev } = S;
   const { clamp, lerp, ease, pulse } = U;
   const W = G.W, H = G.H;
+  G.setStyle('paper', { amp: 0, second: false, hatch: false, textBoil: 0 }); // smooth, even outlines everywhere
 
   // ---------- layout of the street (1080 × 1920) ----------
   const SKY_END = 930, SB = 1110, CURB = 1150, ST0 = 1172, ST1 = 1632, LANE = 1402, CAR_Y = 1590;
-  const LS = 1.15, TS = 1.0; // Lulu / Tio Art scale in wide shots
+  const LS = 0.8, TS = 1.0; // Lulu / Tio Art scale in wide shots (she is ≈ 0.6 of his height)
   const CW = [300, 760]; // crosswalk x range
   const stripeY = (i) => 1192 + i * 56; // zebra stripes (8)
   const PAL = { sky0: '#BFE3E0', sky1: '#F6F0E2', walk: '#EFE3CC', curb: '#D8D2C6', road: '#5E6472', grass: '#9CC97A' };
 
-  const TIO = { skin: '#B07A55', hair: '#2A1C16', hairStyle: 'quiff', facialHair: 'trimmed', glasses: 'round', glassesColor: '#7A4A2A', outfit: 'suit', robe: '#D9A23A', trim: '#FBF6EC', shirt: '#FBF6EC', pants: '#2E3E66', shoes: '#8A5A3A' };
-  const tioHand = (ctx, x, y, s, seed) => G.ellipse(ctx, x, y, 17 * s, 16 * s, { fill: TIO.skin, lw: 3.5, seed });
+  // a world point → a character's own (feet) coordinates; seated characters are built hips-at-origin, so pass their hip
+  const toLocal = (p, x, y, s, hipY = 0) => [(p[0] - x) / s, (p[1] - y) / s + hipY];
+  const TIO_HIP = Ch.TIO_SK.hip, LSK = Ch.LULU_SK;
   const blinkAt = (t, seed) => { const k = Math.floor(t / 2.3); const tb = k * 2.3 + 0.4 + U.hash(seed, k) * 1.4; return Math.abs(t - tb) < 0.07 ? 1 : 0; };
 
   // ---------- scenery ----------
@@ -154,8 +156,8 @@
   const beepAmt = (t) => Math.max(0, ...ev.beeps.map((b) => (t >= b && t < b + 0.28 ? 1 - (t - b) / 0.28 : 0)));
 
   // ---------- the ball's flight (kick, three bounces, the street) ----------
-  const BALL_R = 30;
-  const BALL_PTS = [[ev.kick, 395, SB - BALL_R - 6, 0], [ev.bounces[0], 480, SB - BALL_R, 150], [ev.bounces[1], 590, SB - BALL_R, 120], [ev.bounces[2], 690, CURB - BALL_R, 90], [ev.ballStreet, 650, 1300, 60]];
+  const BALL_R = 24;
+  const BALL_PTS = [[ev.kick, 362, SB - BALL_R - 4, 0], [ev.bounces[0], 480, SB - BALL_R, 150], [ev.bounces[1], 590, SB - BALL_R, 120], [ev.bounces[2], 690, CURB - BALL_R, 90], [ev.ballStreet, 650, 1300, 60]];
   function ballAt(t) {
     if (t <= BALL_PTS[0][0]) return { x: BALL_PTS[0][1], y: BALL_PTS[0][2], spin: 0 };
     for (let i = 1; i < BALL_PTS.length; i++) {
@@ -198,7 +200,7 @@
     street(ctx, t); car(ctx, 1010, CAR_Y, t);
     ctx.restore();
     const u = clamp((t - ev.scare) / (ev.lift - ev.scare));
-    Ch.lulu(ctx, { x: 490, y: 2020, s: 5, eyes: 'wide', brows: 'worried', mouth: 'wavy', tears: 0.15 + 0.75 * ease.outQuad(u), tremble: 1, look: u < 0.4 ? 0.7 : 0.1, lookY: u < 0.4 ? 0 : 0.4, shadow: false, blink: 0 });
+    Ch.lulu(ctx, { x: 490, y: 860 - LSK.head * 6.2, s: 6.2, eyes: 'wide', brows: 'worried', mouth: 'wavy', tears: 0.15 + 0.75 * ease.outQuad(u), tremble: 1, look: u < 0.4 ? 0.7 : 0.1, lookY: u < 0.4 ? 0 : 0.4, shadow: false, blink: 0 });
   }
   function shotLift(ctx, t) {
     street(ctx, t);
@@ -207,12 +209,11 @@
     // Tio Art scoops her up and carries her back to the sidewalk
     const u = clamp((t - ev.lift) / (ev.land - ev.lift));
     const tx = lerp(470, 390, ease.inOutQuad(u)), ty = lerp(1330, SB + 10, ease.inOutQuad(u));
-    const lx = tx + 130 * TS, ly = ty - 110 * TS; // held at his side, so both faces show
-    const hands = [[lx - 50 * LS * 0.9, ly - 150 * LS * 0.9], [lx + 50 * LS * 0.9, ly - 150 * LS * 0.9]];
-    const loc = (p) => [(p[0] - tx) / TS, (p[1] - ty) / TS];
-    Ch.person(ctx, { x: tx, y: ty, s: TS, pose: 'walk', walk: u * 1.2, style: TIO, eyes: 'normal', brows: 'up', mouth: 'smile', look: 0.6, handL: loc(hands[0]), handR: loc(hands[1]) });
-    Ch.lulu(ctx, { x: lx, y: ly, s: LS * 0.9, pose: 'lifted', eyes: u < 0.6 ? 'wide' : 'normal', brows: 'up', mouth: 'o', tears: 0.5, look: -0.6, shadow: false });
-    hands.forEach((p, i) => tioHand(ctx, p[0], p[1], TS, 530 + i));
+    const ls = LS * 0.9, lx = tx + 128 * TS, ly = ty - 170 * TS; // held at his side, by the armpits, so both faces show
+    const pits = [-1, 1].map((sd) => [lx + sd * 36 * ls, ly + (LSK.sh + 14) * ls]);
+    Ch.tio(ctx, { x: tx, y: ty, s: TS, pose: 'walk', walk: u * 1.2, eyes: 'normal', brows: 'up', mouth: 'smile', look: 0.6, handL: toLocal(pits[0], tx, ty, TS), handR: toLocal(pits[1], tx, ty, TS), backUke: true });
+    Ch.lulu(ctx, { x: lx, y: ly, s: ls, pose: 'lifted', eyes: u < 0.6 ? 'wide' : 'normal', brows: 'up', mouth: 'o', tears: 0.5, look: -0.6, shadow: false });
+    pits.forEach((p, i) => Ch.tioHand(ctx, p[0], p[1], TS, i ? Math.PI + 0.5 : -0.5, 'grip', 530 + i));
   }
   function shotComfort(ctx, t) {
     street(ctx, t);
@@ -220,30 +221,30 @@
     car(ctx, 1010, CAR_Y, t);
     const calm = clamp((t - ev.wipe) / 0.3), pointing = t >= ev.point;
     const lx = 300, ly = SB, tx = 500, ty = CURB;
-    const handPt = [lx + 70 * LS, ly - 150 * LS];
-    Ch.person(ctx, { x: tx, y: ty, s: TS, pose: 'sit', style: TIO, eyes: t >= ev.wipe && t < ev.point ? 'happy' : 'normal', brows: 'up', mouth: 'smile', look: pointing ? 1 : -0.7, handL: [(handPt[0] - tx) / TS, (handPt[1] - ty) / TS], gesture: pointing ? 'point' : null, blink: blinkAt(t, 3) });
-    Ch.lulu(ctx, { x: lx, y: ly, s: LS, eyes: 'normal', brows: calm < 1 ? 'worried' : 'neutral', mouth: calm < 1 ? 'wavy' : 'smile', tears: 0.55 * (1 - calm), look: pointing ? 1 : 0.6, headRot: pointing ? 0.5 : 0.2, handR: [70, -150], blink: blinkAt(t, 4) });
-    if (t >= ev.wipe && t < ev.wipe + 0.6) { const a = 1 - (t - ev.wipe) / 0.6; ctx.save(); ctx.globalAlpha *= a; G.star(ctx, lx + 34, ly - 238 * LS, 16 + 10 * (1 - a), { fill: '#FFF6C8', seed: 540 }); ctx.restore(); }
+    const lh = [62, -250], hp = [lx + lh[0] * LS, ly + lh[1] * LS];
+    Ch.tio(ctx, { x: tx, y: ty, s: TS, pose: 'sit', eyes: t >= ev.wipe && t < ev.point ? 'happy' : 'normal', brows: 'up', mouth: 'smile', look: pointing ? 1 : -0.7, handL: toLocal(hp, tx, ty, TS, TIO_HIP), gesture: pointing ? 'point' : null, blink: blinkAt(t, 3) });
+    Ch.lulu(ctx, { x: lx, y: ly, s: LS, eyes: 'normal', brows: calm < 1 ? 'worried' : 'neutral', mouth: calm < 1 ? 'wavy' : 'smile', tears: 0.55 * (1 - calm), look: pointing ? 1 : 0.6, headRot: pointing ? 0.5 : 0.2, handR: lh, blink: blinkAt(t, 4) });
+    if (t >= ev.wipe && t < ev.wipe + 0.6) { const a = 1 - (t - ev.wipe) / 0.6; ctx.save(); ctx.globalAlpha *= a; G.star(ctx, lx + 17 * LS, ly + (LSK.head + 2) * LS, 12 + 8 * (1 - a), { fill: '#FFF6C8', seed: 540 }); ctx.restore(); }
   }
-  // the lesson at the crosswalk: Lulu (x 430) and Tio Art (x 640) at the top of the zebra
+  // holding hands: Lulu reaches up, Tio Art reaches down; both hands meet just above her shoulder
   function holdHands(lx, ly, tx, ty) {
-    const hp = [lx + 75 * LS, ly - 190 * LS];
-    return { luluR: [75, -190], tioL: [(hp[0] - tx) / TS, (hp[1] - ty) / TS], world: hp };
+    const lh = [72, -318], hp = [lx + lh[0] * LS, ly + lh[1] * LS];
+    return { luluR: lh, tioL: toLocal(hp, tx, ty, TS), world: hp };
   }
   function shotLesson(ctx, t) {
     street(ctx, t, { crosswalk: true });
     signal(ctx, 200, SB + 10, 640, false, t);
     Ch.redBall(ctx, 330, SB - BALL_R + 4, BALL_R, 0, 600);
     car(ctx, 1010, CAR_Y, t);
-    const lx = 430, tx = 640;
+    const lx = 430, tx = 610;
     const look = t >= ev.lookR ? 1 : t >= ev.lookL ? -1 : 0;
     const lookOn = t >= ev.lookL && t < T(5, 0.5);
     const stop = t >= ev.stop && t < ev.lookL;
     const joined = t >= ev.hands;
     const hh = holdHands(lx, SB, tx, SB);
     const reach = clamp((t - (ev.hands - 0.25)) / 0.25);
-    Ch.person(ctx, { x: tx, y: SB, s: TS, pose: 'stand', style: TIO, eyes: joined ? 'happy' : 'normal', mouth: t < T(6) ? 'open' : 'smile', look: lookOn ? look : -0.6, headRot: lookOn ? look * 0.12 : 0, brows: 'up', handL: reach > 0 ? [lerp(-92, hh.tioL[0], reach), lerp(-180, hh.tioL[1], reach)] : undefined, handR: stop ? [150, -400] : undefined, blink: blinkAt(t, 5) });
-    Ch.lulu(ctx, { x: lx, y: SB, s: LS, eyes: joined ? 'happy' : 'normal', mouth: joined ? 'grin' : 'smile', look: lookOn ? look : 0.5, headRot: lookOn ? look : 0, gesture: stop ? 'stop' : null, handR: reach > 0 && !stop ? [lerp(58, 75, reach), lerp(-81, -190, reach)] : undefined, blink: blinkAt(t, 6) });
+    Ch.tio(ctx, { x: tx, y: SB, s: TS, pose: 'stand', eyes: joined ? 'happy' : 'normal', mouth: t < T(6) ? 'open' : 'smile', look: lookOn ? look : -0.6, headRot: lookOn ? look * 0.5 : 0, brows: 'up', handL: reach > 0 ? [lerp(-70, hh.tioL[0], reach), lerp(-252, hh.tioL[1], reach)] : undefined, gesture: stop ? 'stop' : null, backUke: true, blink: blinkAt(t, 5) });
+    Ch.lulu(ctx, { x: lx, y: SB, s: LS, eyes: joined ? 'happy' : 'normal', mouth: joined ? 'grin' : 'smile', look: lookOn ? look : 0.5, headRot: lookOn ? look : 0, gesture: stop ? 'stop' : null, handR: reach > 0 && !stop ? [lerp(47, hh.luluR[0], reach), lerp(-180, hh.luluR[1], reach)] : undefined, blink: blinkAt(t, 6) });
     if (joined) {
       for (let k = 0; k < 3; k++) {
         const a = clamp((t - ev.hands - k * 0.08) / 0.9);
@@ -275,18 +276,18 @@
     const k = Math.floor(p), f = p - k;
     const stepY = (i) => (i <= 0 ? SB : stripeY(i - 1) + 28);
     const y = lerp(stepY(Math.min(k, 8)), stepY(Math.min(k + 1, 8)), ease.inOutQuad(f));
-    const lx = 440, tx = 630;
+    const lx = 440, tx = 615;
     const jump = t >= ev.eba ? Math.max(0, Math.sin(Math.PI * clamp((t - ev.eba) / 0.5))) * 80 : 0;
     const eba = t >= ev.eba;
     const hh = holdHands(lx, y, tx, y);
     const walking = p < 8;
-    Ch.person(ctx, { x: tx, y, s: TS, pose: walking ? 'walk' : 'stand', walk: p / 2, style: TIO, eyes: eba ? 'happy' : 'normal', mouth: 'smile', look: -0.5, handL: eba ? undefined : hh.tioL, gesture: eba ? 'thumbsUp' : null, blink: blinkAt(t, 7) });
-    const ballHand = [-56, -112];
+    Ch.tio(ctx, { x: tx, y, s: TS, pose: walking ? 'walk' : 'stand', walk: p / 2, eyes: eba ? 'happy' : 'normal', mouth: 'smile', look: -0.5, handL: eba ? undefined : hh.tioL, gesture: eba ? 'thumbsUp' : null, backUke: true, blink: blinkAt(t, 7) });
+    const ballHand = [-44, -196]; // the ball tucked under her left arm
     Ch.lulu(ctx, { x: lx, y: y - jump, s: LS, pose: walking ? 'run' : 'stand', run: p / 2, eyes: eba ? 'happy' : 'normal', mouth: eba ? 'grin' : 'smile', look: 0.4, handR: eba ? undefined : hh.luluR, gesture: eba ? 'thumbsUp' : null, handL: ballHand, shadow: !jump, blink: blinkAt(t, 8) });
-    Ch.redBall(ctx, lx + (ballHand[0] - 6) * LS, y - jump + (ballHand[1] + 6) * LS, BALL_R * 0.95, 0, 600);
-    G.ellipse(ctx, lx + ballHand[0] * LS, y - jump + ballHand[1] * LS, 13 * LS, 12 * LS, { fill: Ch.LULU.skin, lw: 3.5, seed: 541 });
+    Ch.redBall(ctx, lx + (ballHand[0] - 12) * LS, y - jump + (ballHand[1] + 4) * LS, BALL_R, 0, 600);
+    Ch.luluHand(ctx, lx + ballHand[0] * LS, y - jump + ballHand[1] * LS, LS, -0.3, 'grip', 541);
     if (eba) {
-      G.bubble(ctx, 'Eba!', lx - 40, y - jump - 470, lx, y - jump - 400, t, ev.eba, ev.outro - 0.15, { size: 72 });
+      G.bubble(ctx, 'Eba!', lx - 30, y - jump - 400, lx, y - jump - 345, t, ev.eba, ev.outro - 0.15, { size: 72 });
     }
   }
   function shotOutro(ctx, t) {
@@ -302,14 +303,13 @@
     const waving = t >= ev.wave;
     const strum = Math.max(0, ...ev.strums.map((s) => (t >= s && t < s + 0.2 ? 1 - (t - s) / 0.2 : 0)));
     // Tio Art plays the ukulele (his strumming hand moves on every strum)
-    const OS = 1.3, tx = 660, ty = 1308, rot = -1.05, ub = [tx + 30 * OS, ty - 120 * OS];
-    const neck = [ub[0] + Math.sin(rot) * 115 * OS, ub[1] - Math.cos(rot) * 115 * OS];
-    const hR = [ub[0] + 14 * OS, ub[1] + (2 + strum * 18 - 8) * OS];
-    const loc = (p) => [(p[0] - tx) / OS, (p[1] - ty) / OS];
-    Ch.person(ctx, { x: tx, y: ty, s: OS, pose: 'sit', style: TIO, eyes: 'happy', mouth: t < T(9, 2) ? 'open' : 'smile', look: -0.3, handL: loc(neck), handR: waving ? undefined : loc(hR), gesture: waving ? 'wave' : null });
+    const OS = 1.3, tx = 660, ty = 1308, rot = -1.2, ub = [tx + 30 * OS, ty - 100 * OS];
+    const neck = [ub[0] + Math.sin(rot) * 112 * OS, ub[1] - Math.cos(rot) * 112 * OS];
+    const hR = [ub[0] + 12 * OS, ub[1] + (strum * 16 - 2) * OS];
+    Ch.tio(ctx, { x: tx, y: ty, s: OS, pose: 'sit', eyes: 'happy', mouth: t < T(9, 2) ? 'open' : 'smile', look: -0.3, handL: toLocal(neck, tx, ty, OS, TIO_HIP), handR: waving ? undefined : toLocal(hR, tx, ty, OS, TIO_HIP), gesture: waving ? 'wave' : null });
     Ch.ukulele(ctx, ub[0], ub[1], rot, 0.95 * OS, 720);
-    tioHand(ctx, neck[0], neck[1], OS, 730);
-    if (!waving) tioHand(ctx, hR[0], hR[1], OS, 731);
+    Ch.tioHand(ctx, neck[0], neck[1], OS, -Math.PI / 2, 'grip', 730);
+    if (!waving) Ch.tioHand(ctx, hR[0], hR[1], OS, Math.PI * 0.7, 'grip', 731);
     Ch.lulu(ctx, { x: 330, y: ty, s: LS * 1.3, pose: 'sit', swing: 1, eyes: 'happy', mouth: 'grin', gesture: waving ? 'wave' : null, look: 0.5, headRot: 0.2 });
     petals(ctx, t, 0, W, 150, 1500, 22, 11);
     // the channel name stamps on the sung words, on a torn paper banner
@@ -329,13 +329,13 @@
   }
 
   const film = Shots.film([
-    { at: 0, draw: shotKick, cam: (s) => { const u = ease.inOutQuad(clamp((s.t - ev.run) / (ev.beeps[0] - ev.run))); return { x: lerp(-90, 110, u), y: lerp(40, 290, u), zoom: 1.3 }; } },
+    { at: 0, draw: shotKick, cam: (s) => { const u = ease.inOutQuad(clamp((s.t - ev.run) / (ev.beeps[0] - ev.run))); return { x: lerp(-70, 80, u), y: lerp(40, 240, u), zoom: 1.55 }; } },
     { at: ev.scare, draw: shotScare, cam: Shots.push(1, 1.08) },
-    { at: ev.lift, draw: shotLift, cam: { x: -60, y: 190, zoom: 1.3 } },
-    { at: ev.land, draw: shotComfort, cam: Shots.combine({ x: -110, y: 20 }, Shots.push(1.3, 1.36)) },
-    { at: ev.lesson, draw: shotLesson, cam: Shots.combine({ x: -20, y: 40 }, Shots.push(1.2, 1.25)) },
+    { at: ev.lift, draw: shotLift, cam: { x: -70, y: 90, zoom: 1.4 } },
+    { at: ev.land, draw: shotComfort, cam: Shots.combine({ x: -120, y: 20 }, Shots.push(1.42, 1.48)) },
+    { at: ev.lesson, draw: shotLesson, cam: Shots.combine({ x: -20, y: 60 }, Shots.push(1.1, 1.14)) },
     { at: ev.green, draw: shotGreen },
-    { at: ev.cross, draw: shotCross, cam: (s) => ({ x: -5, y: lerp(-10, 390, ease.inOutQuad(clamp((s.t - ev.cross) / (ev.steps[7].t - ev.cross)))), zoom: 1.2 }) },
+    { at: ev.cross, draw: shotCross, cam: (s) => ({ x: -5, y: lerp(-10, 390, ease.inOutQuad(clamp((s.t - ev.cross) / (ev.steps[7].t - ev.cross)))), zoom: 1.3 }) },
     { at: ev.outro, draw: shotOutro, in: 'paper', cam: Shots.push(1, 1.03) },
   ]);
 
@@ -344,12 +344,12 @@
       if (t < ev.kick) return; // black before the first downbeat: the story starts with the kick
       film(ctx, t);
       // the lesson's words, drawn over the camera so they stay put and inside the safe area
-      if (t >= ev.lesson - 0.1 && t < ev.green) Subs.draw(ctx, t, S.subtitles, { style: 'karaoke', size: 70, fam: 'Inter', y: 440, maxW: 760, highlight: '#F5C542' });
+      if (t >= ev.lesson - 0.1 && t < ev.green) Subs.draw(ctx, t, S.subtitles, { style: 'karaoke', size: 70, fam: 'Inter', y: 380, maxW: 760, highlight: '#F5C542' });
       if (t >= ev.eba && t < ev.outro + 0.4) G.confetti(ctx, t, ev.eba, { n: 110, seed: 9, spawn: 0.5, fall: 420 });
       const flash = t >= ev.eba && t < ev.eba + 0.3 ? 0.35 * Math.exp(-(t - ev.eba) * 14) : 0;
       if (flash > 0.01) { ctx.fillStyle = `rgba(255,250,235,${flash})`; ctx.fillRect(0, 0, W, H); }
     },
-    post: { paper: 0.35, vignette: 0.22, grain: 0.04 },
+    post: { paper: 0.18, vignette: 0.15, grain: 0.03 },
     fadeOut: 0.8,
   });
 })();
