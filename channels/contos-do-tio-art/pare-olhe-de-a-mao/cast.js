@@ -386,9 +386,10 @@
     BK.blob(ctx, [[-31, 0], [-29, 20], [-20, 36], [-8, 44], [8, 44], [20, 36], [29, 20], [31, 0], [24, 8], [14, 14], [fx, 13], [-14, 14], [-24, 8]], { fill: T_.hair, seed: seed + 46 });
     BK.blob(ctx, [[fx - 13, 19], [fx, 15], [fx + 13, 19], [fx + 9, 23], [fx, 21], [fx - 9, 23]], { fill: T_.hair, seed: seed + 47 });
     const my = 27, mx = fx;
-    if (mouth === 'open') {
-      BK.ell(ctx, mx, my + 3, 8, 7, { fill: '#4A1A16', lw: 2.4, seed: seed + 48 });
-      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(mx - 6, my - 3, 12, 3);
+    if (mouth === 'open' || mouth === 'talk') { // 'talk' = half open, for lip-sync
+      const k = mouth === 'open' ? 1 : 0.6;
+      BK.ell(ctx, mx, my + 3 * k, 8, 7 * k, { fill: '#4A1A16', lw: 2.4, seed: seed + 48 });
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(mx - 6, my - 4 * k + 1, 12, 2.6);
     } else if (mouth === 'grin') {
       const pts = []; for (let i = 0; i <= 10; i++) { const a = Math.PI * i / 10; pts.push([mx + Math.cos(a) * 10, my - 2 + Math.sin(a) * 8]); }
       G.shape(ctx, pts, { fill: '#4A1A16', lw: 2.4, seed: seed + 49, amp: 0, second: false });

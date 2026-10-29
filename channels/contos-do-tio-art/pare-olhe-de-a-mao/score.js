@@ -20,10 +20,10 @@
   //  1 chase       she runs into the street after it; a car comes, beeps twice, stops far away
   //  2 scare/lift  close-up: the scare (music holds its breath) · beat 2: Tio Art lifts her back
   //  3 comfort     on the curb, he holds her hand, wipes the tear, points to the crosswalk
-  //  4-5 lesson    at the crosswalk, sung: "Para, olha pros lados e dá a mão!"
+  //  4-5 lesson    at the crosswalk, spoken: "Para... olha pros lados... e dá a mão!"
   //  6 green       the walking man turns green (plim) · beat 2: they cross, each stripe a note
   //  7 cross/eba   reach the other side · beat 2: "Eba!" thumbs-up
-  //  8-9 outro     bench under the ipê, ukulele, sung: "Mais um conto do Tio Art!"
+  //  8-9 outro     bench under the ipê, ukulele: "E esse foi mais um conto do Tio Art!"
   const S = {
     kick: [T(0), T(1)],
     chase: [T(1), T(2)],
@@ -86,36 +86,54 @@
   ]);
 
   // ---------- melodies (8th-note grid: [note, start8th, dur8ths]) ----------
-  // the lesson, sung by Tio Art (tenor, an octave below) and doubled by the xylophone
-  const LESSON = {
-    4: [['G4', 0, 1, 'pa'], ['E4', 1, 2, 'ra'], ['G4', 4, 1, 'o'], ['G4', 5, 1, 'lya'], ['A4', 6, 1, 'prus'], ['B4', 7, 1, 'la']],
-    5: [['C5', 0, 2, 'dus'], ['A4', 2, 1, 'i'], ['B4', 3, 1, 'daa'], ['C5', 4, 3, 'mow']],
-  };
-  const OUTRO = {
-    8: [['E4', 0, 1, 'mai'], ['G4', 1, 1, 'zum'], ['A4', 2, 1, 'kon'], ['G4', 3, 1, 'tu'], ['E4', 4, 1, 'du'], ['G4', 5, 1, 'chi'], ['A4', 6, 1, 'u']],
-    9: [['C5', 0, 4, 'art']],
-  };
-  const sung = (tbl, bars) => bars.flatMap((b) => placeBar(clock, tbl[b].map(([n, s0, d]) => [n, s0, d]), b).map((x, i) => ({ ...x, syl: tbl[b][i][3] })));
-  const lessonNotes = sung(LESSON, [4, 5]);
-  const outroNotes = sung(OUTRO, [8, 9]);
   // intro/groove hook for the xylophone (bars 3, 6-7 under the action), same shape as the lesson
   const HOOK = [['E5', 0, 1], ['G5', 1, 1], ['E5', 2, 2], ['C5', 4, 1], ['D5', 5, 1], ['E5', 6, 2]];
   const hookNotes = [...placeBar(clock, HOOK, 3)];
 
+  // ---------- the dub: who says what, and when (pt-BR neural voices, rendered by `node voices.js`) ----------
+  // voices/manifest.js holds each line's real duration once rendered; until then a duration is estimated.
+  const VO = node ? (() => { try { return require('./voices/manifest.js'); } catch (e) { return {}; } })() : globalThis.VOICES || {};
+  const VOICE = {
+    tio: { voice: 'pt-BR-AntonioNeural', pitch: '+0Hz', rate: '+6%' },
+    lulu: { voice: 'pt-BR-FranciscaNeural', pitch: '+70Hz', rate: '+8%' }, // raised to a child's register
+  };
+  const dialogue = [
+    { id: 'lulu-la-vai', who: 'lulu', at: T(0, 0.4), text: 'Lá vai!' },
+    { id: 'lulu-minha-bola', who: 'lulu', at: T(1, 0.25), text: 'Minha bola!' },
+    { id: 'tio-opa', who: 'tio', at: T(2, 2) + 0.2, text: 'Opa, peguei!' },
+    { id: 'tio-tudo-bem', who: 'tio', at: T(3, 0) + 0.3, text: 'Tá tudo bem.' },
+    { id: 'tio-vem', who: 'tio', at: T(3, 2) + 0.1, text: 'Vem comigo.' },
+    { id: 'tio-para', who: 'tio', at: T(4, 0) + 0.02, text: 'Para...', display: 'Para,' },
+    { id: 'tio-olha', who: 'tio', at: T(4, 2) + 0.02, text: 'olha pros lados...', display: 'olha pros lados' },
+    { id: 'tio-mao', who: 'tio', at: T(5, 1), text: 'e dá a mão!' },
+    { id: 'lulu-verde', who: 'lulu', at: T(6, 0.6), text: 'Verde!' },
+    { id: 'tio-agora', who: 'tio', at: T(6, 2) + 0.05, text: 'Agora sim, de mãos dadas!' },
+    { id: 'lulu-eba', who: 'lulu', at: ev.eba, text: 'Eba!' },
+    { id: 'tio-conto', who: 'tio', at: T(8, 0) + 0.3, text: 'E esse foi mais um conto do Tio Art!' },
+    { id: 'lulu-tchau', who: 'lulu', at: T(9, 2) + 0.1, text: 'Tchau!' },
+  ].map((d) => {
+    const shown = (d.display || d.text).split(/\s+/);
+    const dur = VO[d.id] ? VO[d.id].dur : 0.12 + shown.length * 0.32;
+    // word times inside the line, shared out by length (a voice spends longer on longer words)
+    const weight = shown.map((x) => x.replace(/[^\p{L}]/gu, '').length + 2), sum = weight.reduce((a, b) => a + b, 0);
+    let t = d.at;
+    const words = shown.map((x, i) => { const o = { w: x, t, end: t + (dur * weight[i]) / sum }; t = o.end; return o; });
+    return { ...VOICE[d.who], ...d, dur, end: d.at + dur, words };
+  });
+  const line = (id) => dialogue.find((d) => d.id === id);
+
   // ---------- words on screen ----------
-  const w = (word, t, end) => ({ w: word, t, end });
-  const subtitles = [
-    {
-      t: T(4, 0) - 0.05, end: T(6, 0) - 0.1, text: 'Para, olha pros lados e dá a mão!',
-      words: [w('Para,', T(4, 0), T(4, 2)), w('olha', T(4, 2), T(4, 3)), w('pros', T(4, 3), T(4, 3.5)), w('lados', T(4, 3.5), T(5, 1)),
-        w('e', T(5, 1), T(5, 1.5)), w('dá', T(5, 1.5), T(5, 1.75)), w('a', T(5, 1.75), T(5, 2)), w('mão!', T(5, 2), T(5, 3.5))],
-    },
-  ];
-  // the channel name stamps on the sung outro words
+  // the lesson as big karaoke words; every other line as a small caption at the bottom of the safe area
+  const LESSON_IDS = ['tio-para', 'tio-olha', 'tio-mao'];
+  const lessonWords = LESSON_IDS.flatMap((id) => line(id).words);
+  const subtitles = [{ t: T(4, 0) - 0.05, end: T(6, 0) - 0.1, text: lessonWords.map((x) => x.w).join(' '), words: lessonWords }];
+  const captions = dialogue.filter((d) => !LESSON_IDS.includes(d.id)).map((d) => ({ t: d.at - 0.05, end: d.end + 0.35, text: d.words.map((x) => x.w).join(' '), words: d.words, who: d.who }));
+  // the channel name stamps on the spoken outro words: "conto", "do", "Tio"
+  const outro = line('tio-conto').words, at = (word) => outro.find((x) => x.w.toLowerCase().startsWith(word)).t;
   const title = [
-    { text: 'Contos', t: T(8, 1), color: '#D94B3A' },
-    { text: 'do', t: T(8, 2), color: '#3D8C86' },
-    { text: 'Tio Art', t: T(9, 0), color: '#D9A23A' },
+    { text: 'Contos', t: at('conto'), color: '#D94B3A' },
+    { text: 'do', t: at('do'), color: '#3D8C86' },
+    { text: 'Tio Art', t: at('tio'), color: '#D9A23A' },
   ];
 
   // ---------- named moments ----------
@@ -133,6 +151,6 @@
     end: ev.end,
   };
 
-  const SCORE = { FPS, FORMAT, W, H, SAFE, WIDE, DURATION, clock, T, BEAT, S, m, chords, chordAt, ev, markers, lessonNotes, outroNotes, hookNotes, subtitles, title };
+  const SCORE = { FPS, FORMAT, W, H, SAFE, WIDE, DURATION, clock, T, BEAT, S, m, chords, chordAt, ev, markers, hookNotes, dialogue, subtitles, captions, title };
   if (node) module.exports = SCORE; else globalThis.SCORE = SCORE;
 })();

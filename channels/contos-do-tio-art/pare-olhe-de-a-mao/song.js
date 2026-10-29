@@ -5,7 +5,7 @@ const { Bus, reverb, pingpong } = require('./engine/audio/dsp');
 const { SR } = require('./engine/audio/dsp');
 const I = require('./engine/audio/instruments');
 const MIX = require('./engine/audio/mix');
-const Sing = require('./engine/audio/sing');
+const fs = require('fs');
 const sc = require('./score');
 const { T, BEAT, DURATION, m, ev, clock } = sc;
 
@@ -59,28 +59,38 @@ for (const c of sc.chords) {
   for (const n of c.notes) { const { L, R } = I.padNote(n, c.t1 - c.t0, { cutoff: 1100, attack: 0.25, release: 0.8 }); pad.addStereo(L, R, c.t0, 0.05); }
 }
 
-// ---------- xylophone: the ball, the hook, the lesson, the zebra steps, the outro ----------
+// ---------- xylophone: the ball, the hook, the zebra steps ----------
 const xy = (midi, t, g, opts = {}, pan = 0) => { const x = I.marimba(midi, { thock: 0, decay: 0.5, ...opts }); xylo.addMono(x, t, g, pan); verb.addMono(x, t, g * 0.35); };
 ev.ballNotes.forEach((n, i) => xy(n.midi, n.t, 0.36, { thock: 0.9 }, -0.2 + i * 0.12)); // every touch of the ball is a note
 for (const n of sc.hookNotes) xy(n.midi, n.t, 0.32);
-for (const n of sc.lessonNotes) xy(n.midi + 12, n.t, 0.12); // doubles the singer an octave up
 for (const n of ev.steps) xy(n.midi, n.t, 0.42, { thock: 0.25 }, -0.4 + n.i * 0.1); // each stripe sings
-for (const n of sc.outroNotes) xy(n.midi + 12, n.t, 0.1);
 // "uh-oh" on the scare: the only sound while the music holds its breath
 xy(m('G5'), ev.scare, 0.42, { decay: 0.7 });
 xy(m('E5'), ev.scare + BEAT * 0.75, 0.36, { decay: 0.9 });
 { const { L, R } = I.padNote(m('A3'), BEAT * 2, { cutoff: 700, attack: 0.05, release: 0.6 }); pad.addStereo(L, R, ev.scare, 0.06); }
 
-// ---------- voices (formant singer), doubled by the xylophone and shown on screen ----------
-function sing(notes, type, gain, opts = {}) {
-  const t0 = notes[0].t;
-  const x = Sing.phrase(notes.map((n) => ({ ...n, t: n.t - t0, dur: n.dur * 0.95 })), { type, ...opts });
-  vox.addMono(x, t0 - x.lead, gain);
-  verb.addMono(x, t0 - x.lead, gain * 0.18);
+// ---------- the dub: each line of SCORE.dialogue (rendered by voices.js) at its time ----------
+// Also a mouth track per character (loudness per video frame, 0..1) for lip-sync: out/lipsync.json.
+const FPS = sc.FPS, NF = Math.ceil(DURATION * FPS);
+const lip = { fps: FPS, tio: new Array(NF).fill(0), lulu: new Array(NF).fill(0) };
+const VGAIN = { tio: 1.0, lulu: 0.9 };
+for (const d of sc.dialogue) {
+  const file = path.join(__dirname, 'voices', `${d.id}.wav`);
+  if (!fs.existsSync(file)) { console.warn(`  ! missing voices/${d.id}.wav: run node voices.js`); continue; }
+  const b = MIX.loadAudio(file, { at: d.at, gain: VGAIN[d.who], length: DURATION });
+  for (let i = 0; i < N; i++) { vox.L[i] += b.L[i]; vox.R[i] += b.R[i]; }
+  // loudness per frame, normalised to the line's own peak so every line opens the mouth fully
+  const f0 = Math.floor(d.at * FPS), f1 = Math.min(NF, Math.ceil(d.end * FPS) + 1), env = [];
+  for (let f = f0; f < f1; f++) {
+    let e = 0; const a = Math.floor((f / FPS) * SR), z = Math.min(N, Math.floor(((f + 1) / FPS) * SR));
+    for (let i = a; i < z; i++) e += b.L[i] * b.L[i];
+    env.push(Math.sqrt(e / Math.max(1, z - a)));
+  }
+  const peak = Math.max(...env, 1e-6);
+  env.forEach((e, k) => { lip[d.who][f0 + k] = Math.max(lip[d.who][f0 + k], Math.round((e / peak) * 100) / 100); });
 }
-sing(sc.lessonNotes.map((n) => ({ ...n, midi: n.midi - 12 })), 'tenor', 0.55, { vib: 0.18, seed: 3 }); // Tio Art
-sing([{ t: ev.eba, dur: BEAT * 0.4, midi: m('E5'), syl: 'e' }, { t: ev.eba + BEAT * 0.5, dur: BEAT * 0.9, midi: m('A5'), syl: 'baa' }], 'soprano', 0.45, { bright: 1.2, seed: 7 }); // Lulu: "Eba!"
-sing(sc.outroNotes.map((n) => ({ ...n, midi: n.midi - 12 })), 'tenor', 0.5, { vib: 0.2, seed: 5 }); // "Mais um conto do Tio Art!"
+fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
+fs.writeFileSync(path.join(__dirname, 'out', 'lipsync.json'), JSON.stringify(lip));
 
 // ---------- fx, each one tied to an event in the score ----------
 fx.addMono(I.thwack(), ev.kick, 0.35);
@@ -107,13 +117,13 @@ for (const s of sc.title) fx.addMono(I.thud(170, 0.05), s.t, 0.2);
 for (const n of [m('C6'), m('E6'), m('G6'), m('B6')]) { const x = I.musicBox(n); fx.addMono(x, T(9, 2) + (n - m('C6')) * 0.02, 0.1); verb.addMono(x, T(9, 2), 0.1); }
 
 // ---------- mix ----------
-MIX.duck([uke, xylo, drums], vox, { depth: 0.55 }); // the band steps back while someone sings
+MIX.duck([uke, xylo, drums, pad], vox, { depth: 0.72 }); // the band steps back while someone speaks
 const stems = {
   uke, xylo, bass, drums, pad, vox, fx,
   verb: reverb(verb, { room: 0.7, damp: 0.4 }),
   dly: pingpong(dly, BEAT * 0.75, 0.3, 3500),
 };
-const GAIN = { uke: 1.4, xylo: 1.1, bass: 0.9, drums: 0.5, pad: 2.0, vox: 3.6, fx: 1.0, verb: 0.8, dly: 0.6 };
+const GAIN = { uke: 1.4, xylo: 1.1, bass: 0.9, drums: 0.5, pad: 2.0, vox: 1.6, fx: 1.0, verb: 0.8, dly: 0.6 };
 const out = path.join(__dirname, 'out');
 const mix = MIX.mixdown(stems, GAIN, { stemDir: process.env.STEMS ? out : null });
 MIX.highpass(mix, 30);
