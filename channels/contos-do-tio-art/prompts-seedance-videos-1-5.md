@@ -292,7 +292,7 @@ MATERIAL REFS: @image1 Lulu character sheet, @image2 Tio Art character sheet, @i
 
 ## Notas de produção
 
-1. **Crie as fichas de personagem primeiro.** Gere uma imagem de referência (frente, perfil e costas) para Lulu, Tio Art, Pipoca e Theo, usando exatamente as descrições das travas, e passe cada uma como `@image`. É isso que mantém o personagem igual entre vídeos; o NursyTots não fez isso.
+1. **Fichas de personagem:** já estão em `referencias/`: `lulu.png`, `tio-art.png` e `pipoca.png`, recortadas de `ficha-elenco.png` (gerada com Nano Banana 2.1 a partir das travas). Anexe cada uma no `@image` indicado em MATERIAL REFS. Ainda faltam as fichas do Theo (vídeo 2) e da tartaruga e do caranguejo (vídeo 5). É isso que mantém o personagem igual entre vídeos; o NursyTots não fez isso.
 2. **Se o Tio Art for você**, use sua foto como base da ficha e ajuste a trava TIO ART à sua aparência, em todos os prompts.
 3. **Texto na tela e logo entram na edição** (ex.: "ESPERE A SUA VEZ!" em 0:09–0:12). Vídeo gerado por IA costuma errar letras.
 4. **Se o canto em português sair estranho**, gere a música separadamente com a mesma letra e BPM e passe como `@audio1`.
